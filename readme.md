@@ -29,3 +29,33 @@ Then it'll prompt the user with these informations so he can pick the objective 
 # How to install ?
 
 **TODO**
+
+# How to hack on the hook ?
+
+1. Clone the repository
+
+```bash
+git clone https://github.com/marigold-dev/okrs-git-hook
+```
+
+2. Open a terminal in the project
+
+3. Create a switch
+
+```bash
+opam switch create . 4.14.0 --deps-only
+```
+
+4. Update the terminal
+
+```bash
+eval $(opam env)
+```
+
+5. Build the code
+
+```bash
+dune build
+```
+
+6. Voilà! You're ready!
