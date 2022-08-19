@@ -42,8 +42,8 @@ jobs:
           path: |
             ~/.opam
           key: ${{ runner.os }}
-      - name: Create switch
-        run: opam install . --deps-only -y
+      - name: Install deps
+        run: opam install --deps-only -y ./hook.opam
 
       - name: Build
         run: opam exec -- dune build --profile release
