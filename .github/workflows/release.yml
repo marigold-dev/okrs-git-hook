@@ -43,8 +43,8 @@ jobs:
           path: |
             ~/.opam
           key: ${{ runner.os }}
-      - name: Install deps
-        run: opam install --deps-only -y ./hook.opam
+      - name: Create swtich and install deps
+        run: opam switch create . 4.14.0 --deps-only -y
 
       - name: Build
         run: opam exec -- dune build --profile release
