@@ -20,9 +20,10 @@ jobs:
           - build: macos
             os: macos-latest
             ocaml-version: 4.14.0
-          - build: windows
-            os: windows-latest
-            ocaml-version: 4.14.0
+          # Waiting opam 2.2.0: https://ocaml.org/docs/ocaml-on-windows
+          # - build: windows
+          #   os: windows-latest
+          #   ocaml-version: 4.14.0
     env:
       NAME: commit-msg
       OS: ${{ matrix.build }}
