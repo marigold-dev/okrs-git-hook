@@ -49,9 +49,7 @@ jobs:
 
       - name: Build
         shell: bash
-        run: |
-          eval $(opam env)
-          dune build --profile release
+        run: opam exec -- dune build --profile release
 
       - name: Compress artifacts
         shell: bash
