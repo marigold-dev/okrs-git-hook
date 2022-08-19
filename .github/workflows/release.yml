@@ -20,9 +20,9 @@ jobs:
           - build: macos
             os: macos-latest
             ocaml-version: 4.14.0
-          # - build: windows
-          #   os: windows-latest
-          #   ocaml-version: 4.14.0+mingw64
+          - build: windows
+            os: windows-latest
+            ocaml-version: 4.14.0
     env:
       NAME: commit-msg
       OS: ${{ matrix.build }}
@@ -40,15 +40,10 @@ jobs:
         uses: actions/cache@v3
         with:
           path: |
-            ~/_opam
-            ~/_build
+            ~/.opam
           key: ${{ runner.os }}
       - name: Create switch
-        if: ${{ matrix.build != 'windows' }}
-        run: opam switch create . 4.14.0 --deps-only -y || exit 0
-      - name: Create switch
-        if: ${{ matrix.build == 'windows' }}
-        run: opam switch create . 4.14.0 --deps-only -y || Exit 0
+        run: opam install --deps-only -y
 
       - name: Build
         run: opam exec -- dune build --profile release
