@@ -28,9 +28,13 @@ Then it'll prompt the user with these informations so he can pick the objective 
 
 # How to install ?
 
-**TODO**
+Open a terminal at the root of your project, and run the following command, and provide a url when asked for
 
-# How to hack on the hook ?
+```bash
+curl -Ss https://raw.githubusercontent.com/marigold-dev/okrs-git-hook/master/scripts/install.sh?token=GHSAT0AAAAAABVSEB3JYI4PV62AUE5B6QCOYX7S7JQ
+```
+
+# How to develop ?
 
 1. Clone the repository
 

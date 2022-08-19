@@ -6,7 +6,3 @@ exec </dev/tty
 eval "$0.exe $1"
 
 tr -d '\n' < $1 > temp.txt && mv temp.txt $1
-
-cat $1
-
-exit 1
