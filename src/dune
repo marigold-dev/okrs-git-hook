@@ -1,0 +1,13 @@
+(executable
+ (name main)
+ (public_name hook)
+ (package hook)
+ (libraries
+  str
+  lwt
+  cohttp
+  cohttp-lwt-unix
+  yojson
+  ppx_deriving_yojson.runtime)
+ (preprocess
+  (pps ppx_deriving_yojson)))

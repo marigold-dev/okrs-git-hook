@@ -1,0 +1,9 @@
+_esy
+_build
+*.env
+*.install
+.direnv
+.vscode
+_opam
+result
+docker-data
