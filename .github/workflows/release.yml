@@ -47,13 +47,11 @@ jobs:
         shell: bash
         run: opam switch create . 4.14.0 --deps-only -y || exit 0
 
-      - name: Eval env
-        shell: bash
-        run: eval $(opam env)
-
       - name: Build
         shell: bash
-        run: dune build --profile release
+        run: |
+          eval $(opam env)
+          dune build --profile release
 
       - name: Compress artifacts
         shell: bash
