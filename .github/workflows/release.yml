@@ -46,6 +46,11 @@ jobs:
       - name: Create switch
         shell: bash
         run: opam switch create . 4.14.0 --deps-only -y || exit 0
+
+      - name: Eval env
+        shell: bash
+        run: eval $(opam env)
+
       - name: Build
         shell: bash
         run: dune build --profile release
