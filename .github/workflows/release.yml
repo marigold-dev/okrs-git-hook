@@ -44,10 +44,10 @@ jobs:
             ~/_build
           key: ${{ runner.os }}
       - name: Create switch
-        if: ${{ matrix.build != "windows" }}
+        if: ${{ matrix.build != 'windows' }}
         run: opam switch create . 4.14.0 --deps-only -y || exit 0
       - name: Create switch
-        if: ${{ matrix.build == "windows" }}
+        if: ${{ matrix.build == 'windows' }}
         run: opam switch create . 4.14.0 --deps-only -y || Exit 0
 
       - name: Build
