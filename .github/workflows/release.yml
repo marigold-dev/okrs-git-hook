@@ -20,9 +20,9 @@ jobs:
           - build: macos
             os: macos-latest
             ocaml-version: 4.14.0
-          - build: windows
-            os: windows-latest
-            ocaml-version: 4.14.0+mingw64
+          # - build: windows
+          #   os: windows-latest
+          #   ocaml-version: 4.14.0+mingw64
     env:
       NAME: commit-msg
       OS: ${{ matrix.build }}
