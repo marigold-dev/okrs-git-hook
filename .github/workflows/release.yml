@@ -45,7 +45,7 @@ jobs:
             _opam
           key: ${{ runner.os }}
       - name: Create swtich and install deps
-        run: opam switch create . 4.14.0 --deps-only -y
+        run: opam switch create . 4.14.0 --deps-only -y || exit 0
 
       - name: Build
         run: opam exec -- dune build --profile release
