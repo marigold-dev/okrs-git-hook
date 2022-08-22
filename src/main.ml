@@ -10,12 +10,52 @@ type kr = {
 
 type objective = {
   id : int;
-  description : string;
+  objective : string;
   krs : kr list;
 }
 [@@deriving yojson]
 
 type objectives = objective list [@@deriving yojson]
+
+module Cache = struct
+  module Map = Map.Make (String)
+
+  let data = ref Map.empty
+  let add ~branch ~issue = data := Map.add branch issue !data
+  let get ~branch = Map.find_opt branch !data
+
+  let serialize data =
+    let data =
+      Map.to_seq data
+      |> List.of_seq
+      |> List.map (fun (key, value) -> (key, `Int value))
+    in
+    `Assoc data |> Yojson.Basic.to_string
+
+  let deserialize str =
+    Yojson.Basic.from_string str
+    |> Yojson.Basic.Util.to_assoc
+    |> List.map (fun (key, value) -> (key, Yojson.Basic.Util.to_int value))
+    |> List.to_seq
+    |> Map.of_seq
+
+  let save ~path =
+    let file = open_out path in
+    serialize !data |> output_string file;
+    close_out file
+
+  let load ~path =
+    let file =
+      try open_in path
+      with _ ->
+        let file = open_out path in
+        output_string file "{}";
+        close_out file;
+        open_in path
+    in
+    data := In_channel.input_all file |> deserialize;
+    close_in file
+end
 
 module Utils = struct
   let read_index len =
@@ -35,16 +75,47 @@ module Utils = struct
     |> Printf.sprintf "Choose the %s you're working on (-1 if none): "
     |> print_string;
     list |> List.length |> read_index |> List.nth list
+
+  let check_if_empty ~text ~repo_name ~exit_code list =
+    if List.length list = 0 then
+      let () = print_endline "" in
+      let () =
+        Printf.sprintf "No %s found for project: %s" text repo_name
+        |> print_endline
+      in
+      let _ = exit exit_code in
+      ()
+
+  let head_re =
+    Re.(
+      seq
+        [str "ref: refs/heads/"; alt [rg 'a' 'z'; rg 'A' 'Z'] |> rep1 |> group]
+      |> compile)
+
+  let get_current_branch ~git_path =
+    let ( >>= ) = Option.bind in
+    let file = open_in (Printf.sprintf "%s/HEAD" git_path) in
+    let head = In_channel.input_all file in
+    close_in file;
+
+    ( List.nth_opt (Re.all head_re head) 0 >>= fun group ->
+      Re.Group.get_opt group 1 )
+    >>= fun branch ->
+    if branch = "main" || branch = "master" then None else Some branch
 end
 
 open Utils
 
-let config_path =
+let dot_git_path =
   let reg = Str.regexp_string Filename.dir_sep in
   let splitted = Str.split reg Sys.argv.(0) in
-  List.filteri (fun i _ -> i <> List.length splitted - 1) splitted
+  List.filteri
+    (fun i _ -> i <> List.length splitted - 1 && i <> List.length splitted - 2)
+    splitted
   |> String.concat Filename.dir_sep
-  |> Printf.sprintf "%s/.config"
+
+let config_path = Printf.sprintf "%s/hooks/.config" dot_git_path
+let cache_path = Printf.sprintf "%s/.okr-hook-cache.json" dot_git_path
 
 let repo_name_re =
   Re.(
@@ -60,16 +131,7 @@ let repo_name_re =
     |> compile)
 
 let repo_name =
-  let reg = Str.regexp_string Filename.dir_sep in
-  let splitted = Str.split reg Sys.argv.(0) in
-  let git_dir =
-    List.filteri
-      (fun i _ ->
-        i <> List.length splitted - 1 && i <> List.length splitted - 2)
-      splitted
-    |> String.concat Filename.dir_sep
-  in
-  let file = open_in (Printf.sprintf "%s/config" git_dir) in
+  let file = open_in (Printf.sprintf "%s/config" dot_git_path) in
   let content = In_channel.input_all file in
   close_in file;
   match
@@ -83,18 +145,21 @@ let repo_name =
   | None -> failwith "Couldn't find the repo url at .git/config"
 
 let url =
-  let file = open_in config_path in
+  let file =
+    try open_in config_path
+    with _ ->
+      Printf.sprintf "Couldn't find the config file with the url at %s"
+        config_path
+      |> prerr_endline;
+      exit 1
+  in
   let url = file |> input_line in
   close_in file;
   (if String.get url (String.length url - 1) = '/' then url ^ repo_name
   else Printf.sprintf "%s/%s" url repo_name)
   |> Uri.of_string
 
-let () =
-  let () =
-    if Array.length Sys.argv < 2 then failwith "Missing temp path in arguments"
-    else ()
-  in
+let fetch () =
   let response =
     url
     |> Client.get
@@ -108,7 +173,13 @@ let () =
             |> Lwt_result.fail
           else body |> Cohttp_lwt.Body.to_string |> Lwt_result.ok)
     >|= Yojson.Safe.from_string
-    >|= objectives_of_yojson
+    >|= (fun json ->
+          objectives_of_yojson json
+          |> Result.map_error (fun _ ->
+                 Printf.sprintf
+                   "Couldn't parse the api response. Check if %s response is \
+                    valid"
+                   (Uri.to_string url)))
     >>= Lwt_result.lift
     |> Lwt_main.run
   in
@@ -120,30 +191,43 @@ let () =
         |> Printf.sprintf "Error: %s"
         |> prerr_endline
       in
-      let _ = exit 1 in
-      ()
+      exit 1
     else ()
   in
-  let objectives = Result.get_ok response in
+  Result.get_ok response
 
+let prompt objectives =
   let () =
-    if List.length objectives = 0 then
-      let () = print_endline "" in
-      let () =
-        Printf.sprintf "No objective found for project: %s" repo_name
-        |> print_endline
-      in
-      let _ = exit 0 in
-      ()
+    check_if_empty ~text:"objectives" ~repo_name ~exit_code:0 objectives
   in
   let objective =
     choose ~choice_txt:"objective"
-      (fun { description; _ } -> description)
+      (fun { objective; _ } -> objective)
       objectives
   in
-  let kr =
-    choose ~choice_txt:"kr" (fun { result; _ } -> result) objective.krs
+  let () = check_if_empty ~text:"KRs" ~repo_name ~exit_code:1 objective.krs in
+
+  choose ~choice_txt:"kr" (fun { result; _ } -> result) objective.krs
+
+let () =
+  Cache.load ~path:cache_path;
+  let () =
+    if Array.length Sys.argv < 2 then failwith "Missing temp path in arguments"
+    else ()
+  in
+  let run () = (fetch () |> prompt).issue_number in
+  let issue_number =
+    match get_current_branch ~git_path:dot_git_path with
+    | Some branch -> (
+      match Cache.get ~branch with
+      | Some issue -> issue
+      | None ->
+        let issue = run () in
+        Cache.add ~branch ~issue;
+        Cache.save ~path:cache_path;
+        issue)
+    | None -> run ()
   in
   let file = open_out_gen [Open_append] 0o666 Sys.argv.(1) in
-  Printf.fprintf file " #%i" kr.issue_number;
+  Printf.fprintf file " #%i" issue_number;
   close_out file
