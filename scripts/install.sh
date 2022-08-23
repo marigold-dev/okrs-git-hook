@@ -4,7 +4,12 @@ echo "Please input the endpoint of okrs: "
 
 read url
 
-curl -LSs https://github.com/marigold-dev/okrs-git-hook/releases/download/0.1.0/commit-msg-macos-0.1.0.tar.gz -o .git/hooks/temp.tar.gz
+
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    curl -LSs https://github.com/marigold-dev/okrs-git-hook/releases/download/0.2.0/commit-msg-linux-0.2.0.tar.gz -o .git/hooks/temp.tar.gz
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    curl -LSs https://github.com/marigold-dev/okrs-git-hook/releases/download/0.2.0/commit-msg-macos-0.2.0.tar.gz -o .git/hooks/temp.tar.gz
+fi
 
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     tar -xf .git/hooks/temp.tar.gz -C .git/hooks/
