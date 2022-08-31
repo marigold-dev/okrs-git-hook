@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "src/**"
+      - ".github/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
