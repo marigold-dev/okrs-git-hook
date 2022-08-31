@@ -19,9 +19,9 @@ fi
 
 rm .git/hooks/temp.tar.gz
 
-chmod +x .git/hooks/commit-msg.exe
-
 curl -Ss https://raw.githubusercontent.com/marigold-dev/okrs-git-hook/master/scripts/commit-msg -o .git/hooks/commit-msg
+
+chmod +x .git/hooks/commit-msg
 
 echo $url > .git/hooks/.config
 

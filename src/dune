@@ -11,3 +11,13 @@
   ppx_deriving_yojson.runtime)
  (preprocess
   (pps ppx_deriving_yojson)))
+
+(env
+ (static
+  (flags
+   (:standard -ccopt -static))
+  (ocamlopt_flags
+   (:standard -O3 -unbox-closures)))
+ (release
+  (ocamlopt_flags
+   (:standard -O3 -unbox-closures))))

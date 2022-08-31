@@ -53,9 +53,6 @@ jobs:
       - name: Build
         run: opam exec -- dune build --profile release
 
-      - name: Test
-        run: _build/default/src/main.exe || exit 0
-
       - name: Compress artifacts
         shell: bash
         run: |
