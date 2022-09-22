@@ -89,7 +89,12 @@ module Utils = struct
   let head_re =
     Re.(
       seq
-        [str "ref: refs/heads/"; alt [rg 'a' 'z'; rg 'A' 'Z'] |> rep1 |> group]
+        [
+          str "ref: refs/heads/";
+          alt [rg 'a' 'z'; rg 'A' 'Z'; char '_'; char '-'; char '/'; char '.']
+          |> rep1
+          |> group;
+        ]
       |> compile)
 
   let get_current_branch ~git_path =
