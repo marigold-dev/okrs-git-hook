@@ -7,3 +7,5 @@ _build
 _opam
 result
 docker-data
+
+.pre-commit-config.yaml
