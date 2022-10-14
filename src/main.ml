@@ -112,28 +112,14 @@ end
 open Utils
 
 let dot_git_path =
-  let reg = Str.regexp_string Filename.dir_sep in
-  let splitted = Str.split reg Sys.argv.(0) in
-  List.filteri
-    (fun i _ -> i <> List.length splitted - 1 && i <> List.length splitted - 2)
-    splitted
-  |> String.concat Filename.dir_sep
+  Printf.sprintf "%s/.git" @@ Sys.getcwd ()
 
 let config_path = Printf.sprintf "%s/hooks/.config" dot_git_path
 let cache_path = Printf.sprintf "%s/.okr-hook-cache.json" dot_git_path
 
-let repo_name_re =
-  Re.(
-    seq
-      [
-        str "https://";
-        Re.any |> rep1 |> non_greedy;
-        char '/';
-        Re.any |> rep1 |> non_greedy;
-        char '/';
-        any |> rep1 |> group;
-      ]
-    |> compile)
+let repo_name_pcre =
+  Re.Pcre.re "(git@|https:\/\/)[a-z\.]+|[:\/]([a-z-_]+)\/([a-z\-]+)\.git"
+  |> Re.compile
 
 let repo_name =
   let file = open_in (Printf.sprintf "%s/config" dot_git_path) in
@@ -141,7 +127,7 @@ let repo_name =
   close_in file;
   match
     Option.bind
-      (List.nth_opt (Re.all repo_name_re content) 0)
+      (List.nth_opt (Re.all repo_name_pcre content) 0)
       (fun group -> Re.Group.get_opt group 1)
   with
   | Some repo_name ->

@@ -4,6 +4,8 @@
  (package hook)
  (libraries
   str
+  re
+  re.pcre
   lwt
   cohttp
   cohttp-lwt-unix

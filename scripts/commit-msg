@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Get back control of stdin
 exec </dev/tty
@@ -7,7 +7,7 @@ eval "$0.exe $1"
 
 if [ $? -eq 0 ]
 then
-    tr -d '\n' < $1 > temp.txt && mv temp.txt $1
+    tr -d '\n' < "$1" > temp.txt && mv temp.txt "$1"
     exit 0
 else
     echo "Hook failed. Commit is cancelled"
